@@ -135,6 +135,99 @@ requires
     assert(forall|i: int| 0 <= i < t1.len() ==> t[i] == t1[t1.len() - i - 1]);
 }
 
+fn binary_search_test1(t: Vec<u64>)
+requires
+    t.len() > 0,
+    t.len() < u64::MAX - 1 as usize,
+    forall|i: int, j: int| 0 <= i <= j < t.len() ==> t[i] <= t[j],
+{
+    for i in 0 .. t.len()
+    invariant
+        forall|i: int, j: int| 0 <= i <= j < t.len() ==> t[i] <= t[j],
+    {
+        let k = t[i];
+        let r = binary_search(&t, k);
+        // assert(r < t.len());
+        // assert(t[r as int] == k);
+        let r = binary_search_no_spinoff(&t, k);
+        // assert(r < t.len());
+        // assert(t[r as int] == k);
+    }
+}
+
+fn binary_search_test2(t: Vec<u64>)
+requires
+    t.len() > 0,
+    t.len() < u64::MAX - 1 as usize,
+    forall|i: int, j: int| 0 <= i <= j < t.len() ==> t[i] <= t[j],
+{
+    for i in 0 .. t.len()
+    invariant
+        forall|i: int, j: int| 0 <= i <= j < t.len() ==> t[i] <= t[j],
+    {
+        let k = t[i];
+        let r = binary_search(&t, k);
+        assert(r < t.len());
+        assert(t[r as int] == k);
+        let r = binary_search_no_spinoff(&t, k);
+        // assert(r < t.len());
+        // assert(t[r as int] == k);
+    }
+}
+
+fn binary_search_test3(t: Vec<u64>)
+requires
+    t.len() > 0,
+    t.len() < u64::MAX - 1 as usize,
+    forall|i: int, j: int| 0 <= i <= j < t.len() ==> t[i] <= t[j],
+{
+    for i in 0 .. t.len()
+    invariant
+        forall|i: int, j: int| 0 <= i <= j < t.len() ==> t[i] <= t[j],
+    {
+        let k = t[i];
+        let r = binary_search(&t, k);
+        assert(r < t.len());
+        assert(t[r as int] == k);
+        let r = binary_search_no_spinoff(&t, k);
+        assert(r < t.len());
+        assert(t[r as int] == k);
+    }
+}
+
+fn reverse_test1(t: &mut Vec<u64>)
+requires
+    old(t).len() > 0,
+    old(t).len() < u64::MAX - 1 as usize,
+{
+    let ghost t1 = t@;
+    reverse(t);
+    // assert(t.len() == t1.len());
+    // assert(forall|i: int| 0 <= i < t1.len() ==> t[i] == t1[t1.len() - i - 1]);
+}
+
+fn reverse_test2(t: &mut Vec<u64>)
+requires
+    old(t).len() > 0,
+    old(t).len() < u64::MAX - 1 as usize,
+{
+    let ghost t1 = t@;
+    reverse(t);
+    assert(t.len() == t1.len());
+    // assert(forall|i: int| 0 <= i < t1.len() ==> t[i] == t1[t1.len() - i - 1]);
+}
+
+fn reverse_test3(t: &mut Vec<u64>)
+requires
+    old(t).len() > 0,
+    old(t).len() < u64::MAX - 1 as usize,
+{
+    let ghost t1 = t@;
+    reverse(t);
+    assert(t.len() == t1.len());
+    assert(forall|i: int| 0 <= i < t1.len() ==> t[i] == t1[t1.len() - i - 1]);
+}
+
 pub fn test() {
 }
 

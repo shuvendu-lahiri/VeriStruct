@@ -407,6 +407,54 @@ fn test2(tree_map: TreeMap<bool>, key1: u64, key2: u64) {
     tree_map.insert(key2, true);
 }
 
+fn test1(v: u64)
+requires
+    v < u64::MAX - 10,
+{
+    let mut tree_map = TreeMap::<bool>::new();
+    tree_map.insert(v, false);
+    tree_map.insert(v + 1, false);
+    tree_map.insert(v, true);
+    tree_map.delete(v);
+    let elem17 = tree_map.get(v);
+    let elem18 = tree_map.get(v + 1);
+    // assert(elem17.is_none());
+    // assert(elem18 == Some(&false));
+    test2(tree_map, v + 2, v + 3);
+}
+
+fn test3(v: u64)
+requires
+    v < u64::MAX - 10,
+{
+    let mut tree_map = TreeMap::<bool>::new();
+    tree_map.insert(v, false);
+    tree_map.insert(v + 1, false);
+    tree_map.insert(v, true);
+    tree_map.delete(v);
+    let elem17 = tree_map.get(v);
+    let elem18 = tree_map.get(v + 1);
+    assert(elem17.is_none());
+    // assert(elem18 == Some(&false));
+    test2(tree_map, v + 2, v + 3);
+}
+
+fn test4(v: u64)
+requires
+    v < u64::MAX - 10,
+{
+    let mut tree_map = TreeMap::<bool>::new();
+    tree_map.insert(v, false);
+    tree_map.insert(v + 1, false);
+    tree_map.insert(v, true);
+    tree_map.delete(v);
+    let elem17 = tree_map.get(v);
+    let elem18 = tree_map.get(v + 1);
+    assert(elem17.is_none());
+    assert(elem18 == Some(&false));
+    test2(tree_map, v + 2, v + 3);
+}
+
 
 /// Main function - entry point for the program.
 /// Currently empty as this is a library implementation for testing purposes.

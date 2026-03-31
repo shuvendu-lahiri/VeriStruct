@@ -43,6 +43,169 @@ pub fn test() {
     let tracked j = i.into_inner();
     assert(j % 2 == 1);
 }
+
+pub fn test1() {
+    let tracked u: u32 = 5u32;
+    let tracked i: AtomicInvariant<int, u32, ModPredicate> = AtomicInvariant::new(1, u, 0);
+    open_atomic_invariant!(&i => inner => {
+        proof {
+            if inner == 1u32 {
+                inner = 3u32;
+            }
+            // assert(inner % 2 == 1);
+        }
+    });
+    let tracked j: AtomicInvariant<int, u32, ModPredicate> = AtomicInvariant::new(0, 6u32, 1);
+    open_atomic_invariant!(&i => inner_i => {
+        open_atomic_invariant!(&j => inner_j => {
+            proof {
+                inner_i = 7u32;
+                inner_j = 8u32;
+                // assert(inner_i % 2 == 1);
+                // assert(inner_j % 2 == 0);
+            }
+        });
+        // assert(inner_i % 2 == 1);
+    });
+    let tracked j = i.into_inner();
+    // assert(j % 2 == 1);
+}
+
+pub fn test2() {
+    let tracked u: u32 = 5u32;
+    let tracked i: AtomicInvariant<int, u32, ModPredicate> = AtomicInvariant::new(1, u, 0);
+    open_atomic_invariant!(&i => inner => {
+        proof {
+            if inner == 1u32 {
+                inner = 3u32;
+            }
+            assert(inner % 2 == 1);
+        }
+    });
+    let tracked j: AtomicInvariant<int, u32, ModPredicate> = AtomicInvariant::new(0, 6u32, 1);
+    open_atomic_invariant!(&i => inner_i => {
+        open_atomic_invariant!(&j => inner_j => {
+            proof {
+                inner_i = 7u32;
+                inner_j = 8u32;
+                // assert(inner_i % 2 == 1);
+                // assert(inner_j % 2 == 0);
+            }
+        });
+        // assert(inner_i % 2 == 1);
+    });
+    let tracked j = i.into_inner();
+    // assert(j % 2 == 1);
+}
+
+pub fn test3() {
+    let tracked u: u32 = 5u32;
+    let tracked i: AtomicInvariant<int, u32, ModPredicate> = AtomicInvariant::new(1, u, 0);
+    open_atomic_invariant!(&i => inner => {
+        proof {
+            if inner == 1u32 {
+                inner = 3u32;
+            }
+            assert(inner % 2 == 1);
+        }
+    });
+    let tracked j: AtomicInvariant<int, u32, ModPredicate> = AtomicInvariant::new(0, 6u32, 1);
+    open_atomic_invariant!(&i => inner_i => {
+        open_atomic_invariant!(&j => inner_j => {
+            proof {
+                inner_i = 7u32;
+                inner_j = 8u32;
+                assert(inner_i % 2 == 1);
+                // assert(inner_j % 2 == 0);
+            }
+        });
+        // assert(inner_i % 2 == 1);
+    });
+    let tracked j = i.into_inner();
+    // assert(j % 2 == 1);
+}
+
+pub fn test4() {
+    let tracked u: u32 = 5u32;
+    let tracked i: AtomicInvariant<int, u32, ModPredicate> = AtomicInvariant::new(1, u, 0);
+    open_atomic_invariant!(&i => inner => {
+        proof {
+            if inner == 1u32 {
+                inner = 3u32;
+            }
+            assert(inner % 2 == 1);
+        }
+    });
+    let tracked j: AtomicInvariant<int, u32, ModPredicate> = AtomicInvariant::new(0, 6u32, 1);
+    open_atomic_invariant!(&i => inner_i => {
+        open_atomic_invariant!(&j => inner_j => {
+            proof {
+                inner_i = 7u32;
+                inner_j = 8u32;
+                assert(inner_i % 2 == 1);
+                assert(inner_j % 2 == 0);
+            }
+        });
+        // assert(inner_i % 2 == 1);
+    });
+    let tracked j = i.into_inner();
+    // assert(j % 2 == 1);
+}
+
+pub fn test5() {
+    let tracked u: u32 = 5u32;
+    let tracked i: AtomicInvariant<int, u32, ModPredicate> = AtomicInvariant::new(1, u, 0);
+    open_atomic_invariant!(&i => inner => {
+        proof {
+            if inner == 1u32 {
+                inner = 3u32;
+            }
+            assert(inner % 2 == 1);
+        }
+    });
+    let tracked j: AtomicInvariant<int, u32, ModPredicate> = AtomicInvariant::new(0, 6u32, 1);
+    open_atomic_invariant!(&i => inner_i => {
+        open_atomic_invariant!(&j => inner_j => {
+            proof {
+                inner_i = 7u32;
+                inner_j = 8u32;
+                assert(inner_i % 2 == 1);
+                assert(inner_j % 2 == 0);
+            }
+        });
+        assert(inner_i % 2 == 1);
+    });
+    let tracked j = i.into_inner();
+    // assert(j % 2 == 1);
+}
+
+pub fn test6() {
+    let tracked u: u32 = 5u32;
+    let tracked i: AtomicInvariant<int, u32, ModPredicate> = AtomicInvariant::new(1, u, 0);
+    open_atomic_invariant!(&i => inner => {
+        proof {
+            if inner == 1u32 {
+                inner = 3u32;
+            }
+            assert(inner % 2 == 1);
+        }
+    });
+    let tracked j: AtomicInvariant<int, u32, ModPredicate> = AtomicInvariant::new(0, 6u32, 1);
+    open_atomic_invariant!(&i => inner_i => {
+        open_atomic_invariant!(&j => inner_j => {
+            proof {
+                inner_i = 7u32;
+                inner_j = 8u32;
+                assert(inner_i % 2 == 1);
+                assert(inner_j % 2 == 0);
+            }
+        });
+        assert(inner_i % 2 == 1);
+    });
+    let tracked j = i.into_inner();
+    assert(j % 2 == 1);
+}
+
 pub fn main() {
 }
 

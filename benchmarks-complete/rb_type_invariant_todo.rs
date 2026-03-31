@@ -2,6 +2,50 @@ use vstd::prelude::*;
 
 verus! {
 
+    pub open spec fn mod_auto_plus(n: int) -> bool
+        recommends
+            n > 0,
+    {
+        forall|x: int, y: int|
+            {
+                let z = (x % n) + (y % n);
+                ((0 <= z < n && #[trigger] ((x + y) % n) == z)
+                    || (n <= z < n + n && ((x + y) % n) == z - n))
+            }
+    }
+
+    pub open spec fn mod_auto_minus(n: int) -> bool
+        recommends
+            n > 0,
+    {
+        forall|x: int, y: int|
+            {
+                let z = (x % n) - (y % n);
+                ((0 <= z < n && #[trigger] ((x - y) % n) == z)
+                    || (-n <= z < 0 && ((x - y) % n) == z + n))
+            }
+    }
+
+    pub open spec fn mod_auto(n: int) -> bool
+        recommends
+            n > 0,
+    {
+        &&& (n % n == 0 && (-n) % n == 0)
+        &&& (forall|x: int| #[trigger] ((x % n) % n) == x % n)
+        &&& (forall|x: int| 0 <= x < n <==> #[trigger] (x % n) == x)
+        &&& mod_auto_plus(n)
+        &&& mod_auto_minus(n)
+    }
+
+    pub proof fn lemma_mod_auto(n: int)
+        requires
+            n > 0,
+        ensures
+            mod_auto(n),
+    {
+        admit()
+    }
+
     pub struct RingBuffer<T: Copy> {
         ring: Vec<T>,
         head: usize,
@@ -73,6 +117,10 @@ impl<T: Copy> RingBuffer<T> {
             use_type_invariant(self);
         }
         self.head != self.tail
+    }
+
+    pub closed spec fn ring_len(&self) -> usize {
+        self.ring.len()
     }
 
     /// Returns true if the buffer is full, false otherwise.
@@ -242,6 +290,210 @@ impl<T: Copy> RingBuffer<T> {
 
 #[verifier::loop_isolation(false)]
 fn test(len: usize, value: i32, iterations: usize)
+    requires
+        1 < len < usize::MAX - 1,
+        iterations * 2 < usize::MAX,
+{
+    let mut ring: Vec<i32> = Vec::new();
+
+    if len == 0 {
+        return;
+    }
+
+    for i in 0..(len + 1)
+    invariant
+        ring.len() == i,
+    {
+        ring.push(0);
+    }
+
+    assert(ring.len() == len + 1);
+    let mut buf = RingBuffer::new(ring);
+
+    let ret = buf.dequeue();
+    let buf_len = buf.len();
+    let has_elements = buf.has_elements();
+    assert(!has_elements);
+    assert(ret == None::<i32>);
+    assert(buf_len == 0);
+    assert(len > 1);
+    for i in 0..len
+    invariant
+        buf@.0.len() == i,
+        buf@.1 == len + 1
+    {
+        let enqueue_res = buf.enqueue(value);
+        assert(enqueue_res);
+        let has_elements = buf.has_elements();
+        assert(has_elements);
+        let available_len = buf.available_len();
+        assert(available_len == len - 1 - i);
+    }
+    let dequeue_res = buf.dequeue();
+    assert(dequeue_res.is_some());
+    let enqueue_res = buf.enqueue(value);
+    assert(enqueue_res);
+    let enqueue_res = buf.enqueue(value);
+    assert(!enqueue_res);
+    let dequeue_res = buf.dequeue();
+    assert(dequeue_res.is_some());
+}
+
+#[verifier::loop_isolation(false)]
+fn test1(len: usize, value: i32, iterations: usize)
+    requires
+        1 < len < usize::MAX - 1,
+        iterations * 2 < usize::MAX,
+{
+    let mut ring: Vec<i32> = Vec::new();
+
+    if len == 0 {
+        return;
+    }
+
+    for i in 0..(len + 1)
+    invariant
+        ring.len() == i,
+    {
+        ring.push(0);
+    }
+
+    // assert(ring.len() == len + 1);
+    let mut buf = RingBuffer::new(ring);
+
+    let ret = buf.dequeue();
+    let buf_len = buf.len();
+    let has_elements = buf.has_elements();
+    // assert(!has_elements);
+    // assert(ret == None::<i32>);
+    // assert(buf_len == 0);
+    // assert(len > 1);
+    for i in 0..len
+    invariant
+        buf@.0.len() == i,
+        buf@.1 == len + 1
+    {
+        let enqueue_res = buf.enqueue(value);
+        // assert(enqueue_res);
+        let has_elements = buf.has_elements();
+        // assert(has_elements);
+        let available_len = buf.available_len();
+        // assert(available_len == len - 1 - i);
+    }
+    let dequeue_res = buf.dequeue();
+    // assert(dequeue_res.is_some());
+    let enqueue_res = buf.enqueue(value);
+    // assert(enqueue_res);
+    let enqueue_res = buf.enqueue(value);
+    // assert(!enqueue_res);
+    let dequeue_res = buf.dequeue();
+    // assert(dequeue_res.is_some());
+}
+
+#[verifier::loop_isolation(false)]
+fn test2(len: usize, value: i32, iterations: usize)
+    requires
+        1 < len < usize::MAX - 1,
+        iterations * 2 < usize::MAX,
+{
+    let mut ring: Vec<i32> = Vec::new();
+
+    if len == 0 {
+        return;
+    }
+
+    for i in 0..(len + 1)
+    invariant
+        ring.len() == i,
+    {
+        ring.push(0);
+    }
+
+    assert(ring.len() == len + 1);
+    let mut buf = RingBuffer::new(ring);
+
+    let ret = buf.dequeue();
+    let buf_len = buf.len();
+    let has_elements = buf.has_elements();
+    assert(!has_elements);
+    assert(ret == None::<i32>);
+    assert(buf_len == 0);
+    assert(len > 1);
+    for i in 0..len
+    invariant
+        buf@.0.len() == i,
+        buf@.1 == len + 1
+    {
+        let enqueue_res = buf.enqueue(value);
+        // assert(enqueue_res);
+        let has_elements = buf.has_elements();
+        // assert(has_elements);
+        let available_len = buf.available_len();
+        // assert(available_len == len - 1 - i);
+    }
+    let dequeue_res = buf.dequeue();
+    // assert(dequeue_res.is_some());
+    let enqueue_res = buf.enqueue(value);
+    // assert(enqueue_res);
+    let enqueue_res = buf.enqueue(value);
+    // assert(!enqueue_res);
+    let dequeue_res = buf.dequeue();
+    // assert(dequeue_res.is_some());
+}
+
+#[verifier::loop_isolation(false)]
+fn test3(len: usize, value: i32, iterations: usize)
+    requires
+        1 < len < usize::MAX - 1,
+        iterations * 2 < usize::MAX,
+{
+    let mut ring: Vec<i32> = Vec::new();
+
+    if len == 0 {
+        return;
+    }
+
+    for i in 0..(len + 1)
+    invariant
+        ring.len() == i,
+    {
+        ring.push(0);
+    }
+
+    assert(ring.len() == len + 1);
+    let mut buf = RingBuffer::new(ring);
+
+    let ret = buf.dequeue();
+    let buf_len = buf.len();
+    let has_elements = buf.has_elements();
+    assert(!has_elements);
+    assert(ret == None::<i32>);
+    assert(buf_len == 0);
+    assert(len > 1);
+    for i in 0..len
+    invariant
+        buf@.0.len() == i,
+        buf@.1 == len + 1
+    {
+        let enqueue_res = buf.enqueue(value);
+        assert(enqueue_res);
+        let has_elements = buf.has_elements();
+        assert(has_elements);
+        let available_len = buf.available_len();
+        assert(available_len == len - 1 - i);
+    }
+    let dequeue_res = buf.dequeue();
+    // assert(dequeue_res.is_some());
+    let enqueue_res = buf.enqueue(value);
+    // assert(enqueue_res);
+    let enqueue_res = buf.enqueue(value);
+    // assert(!enqueue_res);
+    let dequeue_res = buf.dequeue();
+    // assert(dequeue_res.is_some());
+}
+
+#[verifier::loop_isolation(false)]
+fn test4(len: usize, value: i32, iterations: usize)
     requires
         1 < len < usize::MAX - 1,
         iterations * 2 < usize::MAX,

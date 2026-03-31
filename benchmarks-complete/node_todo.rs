@@ -290,6 +290,36 @@ requires
     let val4 = Node::get_from_optional(&root, v + 1);
 }
 
+fn test_node1(v: u64)
+requires
+    v < u64::MAX - 10,
+{
+    let mut root: Option<Box<Node<bool>>> = None;
+    Node::insert_into_optional(&mut root, v, false);
+    Node::insert_into_optional(&mut root, v + 1, false);
+    Node::insert_into_optional(&mut root, v, true);
+    let val1 = Node::get_from_optional(&root, v);
+    let val2 = Node::get_from_optional(&root, v + 1);
+    Node::delete_from_optional(&mut root, v);
+    let val3 = Node::get_from_optional(&root, v);
+    let val4 = Node::get_from_optional(&root, v + 1);
+}
+
+fn test_node2(v: u64)
+requires
+    v < u64::MAX - 10,
+{
+    let mut root: Option<Box<Node<bool>>> = None;
+    Node::insert_into_optional(&mut root, v, false);
+    Node::insert_into_optional(&mut root, v + 1, false);
+    Node::insert_into_optional(&mut root, v, true);
+    let val1 = Node::get_from_optional(&root, v);
+    let val2 = Node::get_from_optional(&root, v + 1);
+    Node::delete_from_optional(&mut root, v);
+    let val3 = Node::get_from_optional(&root, v);
+    let val4 = Node::get_from_optional(&root, v + 1);
+}
+
 /// Main function - entry point for the program.
 fn main() { }
 }
