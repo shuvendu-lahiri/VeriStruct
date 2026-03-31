@@ -92,41 +92,6 @@ proof fn proof_int(x: u64) -> (tracked y: u64)
 
 /* TEST CODE BELOW */
 
-pub fn test() {
-
-    let ato = AtomicU64::<(), u64, VEqualG>::new(Ghost(()), 10u64, Tracked(10u64));
-
-    atomic_with_ghost!(ato => fetch_or(19u64);  ghost g => { g = proof_int(g | 19u64); });
-    atomic_with_ghost!(ato => fetch_or(23u64);  update old_val -> new_val; ghost g => {
-        assert(new_val == old_val | 23u64);
-        assert(g == old_val);
-        g = proof_int(g | 23u64);
-        assert(g == new_val);
-    });
-
-    let res = atomic_with_ghost!(ato => compare_exchange(20u64, 25u64);
-        update old_val -> new_val;
-        returning ret;
-        ghost g => {
-            assert(imply(matches!(ret, Ok(_)), old_val == 20u64 && new_val == 25u64));
-            assert(imply(matches!(ret, Err(_)), old_val != 20u64 && new_val == old_val
-                         && ret->Err_0 == old_val));
-            g = if g == 20u64 { proof_int(25u64) } else { g };
-    });
-
-    let res = atomic_with_ghost!(ato => load();
-        returning ret;
-        ghost g => { assert(ret == g); });
-
-    atomic_with_ghost!(ato => store(36u64);
-        update old_val -> new_val;
-        ghost g => {
-            assert(old_val == g);
-            assert(new_val == 36u64);
-            g = proof_int(36u64);
-    });
-}
-
 pub fn test1() {
 
     let ato = AtomicU64::<(), u64, VEqualG>::new(Ghost(()), 10u64, Tracked(10u64));

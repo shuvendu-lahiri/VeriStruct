@@ -358,41 +358,6 @@ TEST CODE BELOW
 
 /// Test function demonstrating basic TreeMap operations.
 ///
-/// Requires: The input value v must be less than u64::MAX - 10 to avoid overflow
-/// Ensures: All operations complete successfully and assertions hold
-fn test(v: u64)
-requires
-    v < u64::MAX - 10,
-{
-    // Create an empty tree map
-    let mut tree_map = TreeMap::<bool>::new();
-
-    // Insert key v with value false
-    tree_map.insert(v, false);
-
-    // Insert key v+1 with value false
-    tree_map.insert(v + 1, false);
-
-    // Update key v with value true (overwrites previous false)
-    tree_map.insert(v, true);
-
-    // Delete key v from the map
-    tree_map.delete(v);
-
-    // Look up deleted key v - should return None
-    let elem17 = tree_map.get(v);
-
-    // Look up existing key v+1 - should return Some(&false)
-    let elem18 = tree_map.get(v + 1);
-
-    // Verify the results
-    assert(elem17.is_none());
-    assert(elem18 == Some(&false));
-
-    // Continue testing with additional operations
-    test2(tree_map, v + 2, v + 3);
-}
-
 /// Additional test function that takes a TreeMap and inserts two more key-value pairs.
 /// Demonstrates that TreeMap can be passed by value and modified.
 ///

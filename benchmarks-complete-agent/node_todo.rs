@@ -260,36 +260,6 @@ impl<V> Node<V> {
 TEST CODE FOR NODE
 */
 
-/// Simple test for Node operations without TreeMap wrapper.
-/// Tests basic insert and get operations on an optional node.
-fn test_node(v: u64)
-requires
-    v < u64::MAX - 10,
-{
-    // Start with an empty tree (None)
-    let mut root: Option<Box<Node<bool>>> = None;
-
-    // Insert first key
-    Node::insert_into_optional(&mut root, v, false);
-
-    // Insert second key
-    Node::insert_into_optional(&mut root, v + 1, false);
-
-    // Update first key
-    Node::insert_into_optional(&mut root, v, true);
-
-    // Get values
-    let val1 = Node::get_from_optional(&root, v);
-    let val2 = Node::get_from_optional(&root, v + 1);
-
-    // Delete first key
-    Node::delete_from_optional(&mut root, v);
-
-    // Get after delete
-    let val3 = Node::get_from_optional(&root, v);
-    let val4 = Node::get_from_optional(&root, v + 1);
-}
-
 fn test_node1(v: u64)
 requires
     v < u64::MAX - 10,

@@ -228,9 +228,6 @@ requires
     assert(forall|i: int| 0 <= i < t1.len() ==> t[i] == t1[t1.len() - i - 1]);
 }
 
-pub fn test() {
-}
-
 #[verifier::loop_isolation(false)]
 fn reverse_no_spinoff(v: &mut Vec<u64>)
 ensures

@@ -48,19 +48,6 @@ impl VecSet {
 
 /* TSET CODE BELOW */
 
-fn test(t: Vec<u64>)
-{
-    let mut vs: VecSet = VecSet::new();
-    assert(vs@ =~= set![]);
-    vs.insert(3);
-    vs.insert(5);
-    let contains2 = vs.contains(2);
-    assert(!contains2);
-    let contains3 = vs.contains(3);
-    assert(contains3);
-    assert(vs@ =~= set![3, 5]);
-}
-
 fn test1(t: Vec<u64>)
 {
     let mut vs: VecSet = VecSet::new();

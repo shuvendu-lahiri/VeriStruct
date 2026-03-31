@@ -289,57 +289,6 @@ impl<T: Copy> RingBuffer<T> {
 /* TEST CODE BELOW */
 
 #[verifier::loop_isolation(false)]
-fn test(len: usize, value: i32, iterations: usize)
-    requires
-        1 < len < usize::MAX - 1,
-        iterations * 2 < usize::MAX,
-{
-    let mut ring: Vec<i32> = Vec::new();
-
-    if len == 0 {
-        return;
-    }
-
-    for i in 0..(len + 1)
-    invariant
-        ring.len() == i,
-    {
-        ring.push(0);
-    }
-
-    assert(ring.len() == len + 1);
-    let mut buf = RingBuffer::new(ring);
-
-    let ret = buf.dequeue();
-    let buf_len = buf.len();
-    let has_elements = buf.has_elements();
-    assert(!has_elements);
-    assert(ret == None::<i32>);
-    assert(buf_len == 0);
-    assert(len > 1);
-    for i in 0..len
-    invariant
-        buf@.0.len() == i,
-        buf@.1 == len + 1
-    {
-        let enqueue_res = buf.enqueue(value);
-        assert(enqueue_res);
-        let has_elements = buf.has_elements();
-        assert(has_elements);
-        let available_len = buf.available_len();
-        assert(available_len == len - 1 - i);
-    }
-    let dequeue_res = buf.dequeue();
-    assert(dequeue_res.is_some());
-    let enqueue_res = buf.enqueue(value);
-    assert(enqueue_res);
-    let enqueue_res = buf.enqueue(value);
-    assert(!enqueue_res);
-    let dequeue_res = buf.dequeue();
-    assert(dequeue_res.is_some());
-}
-
-#[verifier::loop_isolation(false)]
 fn test1(len: usize, value: i32, iterations: usize)
     requires
         1 < len < usize::MAX - 1,
