@@ -42,7 +42,16 @@ impl<V> Node<V> {
     pub open spec fn well_formed(self) -> bool
         decreases self
     {
-        // TODO: add invariant
+        &&& (forall |elem| Node::<V>::optional_as_map(self.left).dom().contains(elem) ==> elem < self.key)
+        &&& (forall |elem| Node::<V>::optional_as_map(self.right).dom().contains(elem) ==> elem > self.key)
+        &&& (match self.left {
+            Some(left_node) => left_node.well_formed(),
+            None => true,
+        })
+        &&& (match self.right {
+            Some(right_node) => right_node.well_formed(),
+            None => true,
+        })
     }
 
     /// Inserts a key-value pair into an optional node, creating a new node if None.
@@ -51,7 +60,11 @@ impl<V> Node<V> {
     /// Ensures: The resulting node (if exists) is well-formed, and the map representation
     ///          equals the original map with the key-value pair inserted
     pub fn insert_into_optional(node: &mut Option<Box<Node<V>>>, key: u64, value: V)
-    // TODO: add requires and ensures
+    requires
+        old(node).is_some() ==> old(node).unwrap().well_formed(),
+    ensures
+        node.is_some() ==> node.unwrap().well_formed(),
+        Node::<V>::optional_as_map(*node) =~= Node::<V>::optional_as_map(*old(node)).insert(key, value),
     {
         if node.is_none() {
             // Create a new leaf node if the current position is empty
@@ -79,7 +92,11 @@ impl<V> Node<V> {
     /// Ensures: The node remains well-formed after insertion, and the map representation
     ///          equals the original map with the key-value pair inserted
     pub fn insert(&mut self, key: u64, value: V)
-    // TODO: add requires and ensures
+    requires
+        old(self).well_formed(),
+    ensures
+        self.well_formed(),
+        self.as_map() =~= old(self).as_map().insert(key, value),
     {
         if key == self.key {
             // Update the value for an existing key
@@ -109,7 +126,11 @@ impl<V> Node<V> {
     /// Ensures: The resulting node (if exists) is well-formed, and the map representation
     ///          equals the original map with the key removed
     pub fn delete_from_optional(node: &mut Option<Box<Node<V>>>, key: u64)
-    // TODO: add requires and ensures
+    requires
+        old(node).is_some() ==> old(node).unwrap().well_formed(),
+    ensures
+        node.is_some() ==> node.unwrap().well_formed(),
+        Node::<V>::optional_as_map(*node) =~= Node::<V>::optional_as_map(*old(node)).remove(key),
     {
         if node.is_some() {
             // Extract the node to work with it
@@ -159,7 +180,15 @@ impl<V> Node<V> {
     ///          in the original tree, the key was the largest in the tree, and the map representation
     ///          equals the original map with that key removed
     pub fn delete_rightmost(node: &mut Option<Box<Node<V>>>) -> (popped: (u64, V))
-    // TODO: add requires and ensures
+    requires
+        old(node).is_some(),
+        old(node).unwrap().well_formed(),
+    ensures
+        node.is_some() ==> node.unwrap().well_formed(),
+        Node::<V>::optional_as_map(*node) =~= Node::<V>::optional_as_map(*old(node)).remove(popped.0),
+        Node::<V>::optional_as_map(*old(node)).dom().contains(popped.0),
+        Node::<V>::optional_as_map(*old(node))[popped.0] == popped.1,
+        forall |elem| Node::<V>::optional_as_map(*old(node)).dom().contains(elem) ==> popped.0 >= elem,
     {
         // Extract the node to work with it
         let mut tmp = None;
@@ -186,7 +215,13 @@ impl<V> Node<V> {
     /// Requires: If the node exists, it must be well-formed
     /// Ensures: Returns Some(reference to value) if the key exists in the subtree, None otherwise
     pub fn get_from_optional(node: &Option<Box<Node<V>>>, key: u64) -> (ret: Option<&V>)
-    // TODO: add requires and ensures
+    requires
+        node.is_some() ==> node.unwrap().well_formed(),
+    ensures
+        ret == (match node {
+            Some(node) => (if node.as_map().dom().contains(key) { Some(&node.as_map()[key]) } else { None }),
+            None => None,
+        }),
     {
         match node {
             None => None,
@@ -201,7 +236,10 @@ impl<V> Node<V> {
     /// Requires: This node must be well-formed
     /// Ensures: Returns Some(reference to value) if the key exists in the subtree, None otherwise
     pub fn get(&self, key: u64) -> (ret: Option<&V>)
-    // TODO: add requires and ensures
+    requires
+        self.well_formed(),
+    ensures
+        ret == (if self.as_map().dom().contains(key) { Some(&self.as_map()[key]) } else { None }),
     {
         if key == self.key {
             // Found the key at this node
@@ -248,6 +286,36 @@ requires
     Node::delete_from_optional(&mut root, v);
 
     // Get after delete
+    let val3 = Node::get_from_optional(&root, v);
+    let val4 = Node::get_from_optional(&root, v + 1);
+}
+
+fn test_node1(v: u64)
+requires
+    v < u64::MAX - 10,
+{
+    let mut root: Option<Box<Node<bool>>> = None;
+    Node::insert_into_optional(&mut root, v, false);
+    Node::insert_into_optional(&mut root, v + 1, false);
+    Node::insert_into_optional(&mut root, v, true);
+    let val1 = Node::get_from_optional(&root, v);
+    let val2 = Node::get_from_optional(&root, v + 1);
+    Node::delete_from_optional(&mut root, v);
+    let val3 = Node::get_from_optional(&root, v);
+    let val4 = Node::get_from_optional(&root, v + 1);
+}
+
+fn test_node2(v: u64)
+requires
+    v < u64::MAX - 10,
+{
+    let mut root: Option<Box<Node<bool>>> = None;
+    Node::insert_into_optional(&mut root, v, false);
+    Node::insert_into_optional(&mut root, v + 1, false);
+    Node::insert_into_optional(&mut root, v, true);
+    let val1 = Node::get_from_optional(&root, v);
+    let val2 = Node::get_from_optional(&root, v + 1);
+    Node::delete_from_optional(&mut root, v);
     let val3 = Node::get_from_optional(&root, v);
     let val4 = Node::get_from_optional(&root, v + 1);
 }

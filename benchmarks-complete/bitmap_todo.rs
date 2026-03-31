@@ -1,5 +1,6 @@
 #![cfg_attr(verus_keep_ghost, verifier::exec_allows_no_decreases_clause)]
 #[allow(unused_imports)]
+use builtin_macros::*;
 use vstd::prelude::*;
 use vstd::seq_lib::*;
 
@@ -59,20 +60,21 @@ verus! {
 pub struct BitMap {
     /// Internal storage using a vector of u64 values.
     /// Each u64 stores 64 bits, allowing for efficient bit operations.
-    pub bits: Vec<u64>,
+    bits: Vec<u64>,
 }
 
 impl BitMap {
-    pub open spec fn bit_at_u64(v: u64, i: int) -> bool {
-        ((v >> (i as u64)) & 1u64) == 1u64
-    }
-
     /// Returns a sequence of boolean values representing the bitmap's contents
-    pub open spec fn view(&self) -> Seq<bool> {
-        Seq::new(
-            (self.bits.len() * 64) as nat,
-            |i: int| Self::bit_at_u64(self.bits@[i / 64], i % 64),
-        )
+    /// This is a specification function used for verification purposes
+    ///
+    /// # Formal Specification Hints
+    /// This function should:
+    /// - Convert the internal u64 representation into a sequence of booleans
+    /// - Maintain the correct ordering of bits
+    /// - Handle the concatenation of multiple u64 chunks correctly
+    /// - Preserve the total number of bits across all chunks
+    spec fn view(&self) -> Seq<bool> {
+        // TODO: implement view
     }
 
     /// Creates a new BitMap from a vector of u64 values
@@ -84,8 +86,7 @@ impl BitMap {
     /// A new BitMap instance containing the provided bits
 
     fn from(v: Vec<u64>) -> (ret: BitMap)
-    ensures
-        ret.bits@ == v@,
+    // TODO: add requires and ensures
     {
         BitMap { bits: v }
     }
@@ -104,18 +105,11 @@ impl BitMap {
     /// - seq_index: determines which u64 chunk contains the bit
     /// - bit_index: determines the bit position within that chunk
     fn get_bit(&self, index: u32) -> (bit: bool)
-    requires
-        (index as int) / 64 < self.bits.len() as int,
-    ensures
-        bit == self.view()[index as int],
+    // TODO: add requires and ensures
     {
         let seq_index: usize = (index / 64) as usize;
         let bit_index: u32 = index % 64;
         let bucket: u64 = self.bits[seq_index];
-        proof {
-            let bi = bit_index as u64;
-            assert((0x1u64 & (bucket >> bi)) == ((bucket >> bi) & 1u64)) by(bit_vector);
-        }
         get_bit64_macro!(bucket, bit_index as u64)
     }
 
@@ -131,39 +125,15 @@ impl BitMap {
     /// 2. Computing the bit position within that chunk
     /// 3. Using set_bit64_macro to modify the specific bit while preserving others
     fn set_bit(&mut self, index: u32, bit: bool)
-    requires
-        (index as int) / 64 < old(self).bits.len() as int,
-    ensures
-        self.view().len() == old(self).view().len(),
-        self.view() =~= old(self).view().update(index as int, bit),
+    // TODO: add requires and ensures
     {
         let seq_index: usize = (index / 64) as usize;
         let bit_index: u32 = index % 64;
         let bv_old: u64 = self.bits[seq_index];
         let bv_new: u64 = set_bit64_macro!(bv_old, bit_index as u64, bit);
-        proof {
-            let bi = bit_index as u64;
-            assert forall|j: int| 0 <= j < 64 && j != bit_index as int implies
-                #[trigger] Self::bit_at_u64(bv_new, j) == Self::bit_at_u64(bv_old, j)
-            by {
-                let ju = j as u64;
-                if bit {
-                    assert(((bv_old | 1u64 << bi) >> ju) & 1u64 == (bv_old >> ju) & 1u64) by(bit_vector)
-                        requires 0u64 <= ju < 64u64, ju != bi, 0u64 <= bi < 64u64;
-                } else {
-                    assert(((bv_old & !(1u64 << bi)) >> ju) & 1u64 == (bv_old >> ju) & 1u64) by(bit_vector)
-                        requires 0u64 <= ju < 64u64, ju != bi, 0u64 <= bi < 64u64;
-                }
-            }
-            if bit {
-                assert(((bv_old | 1u64 << bi) >> bi) & 1u64 == 1u64) by(bit_vector)
-                    requires 0u64 <= bi < 64u64;
-            } else {
-                assert(((bv_old & !(1u64 << bi)) >> bi) & 1u64 == 0u64) by(bit_vector)
-                    requires 0u64 <= bi < 64u64;
-            }
-        }
+        // TODO: add proof
         self.bits.set(seq_index, bv_new);
+        // TODO: add proof
     }
 
     /// Performs a bitwise OR operation between two bitmaps
@@ -178,40 +148,20 @@ impl BitMap {
     /// The operation performs a component-wise OR of the u64 chunks
     /// from both bitmaps, creating a new bitmap with the combined bits
     fn or(&self, bm: &BitMap) -> (ret: BitMap)
-    requires
-        self.bits.len() == bm.bits.len(),
-    ensures
-        ret.view().len() == self.view().len(),
-        forall|i: int| 0 <= i < ret.view().len() ==> ret.view()[i] == (self.view()[i] || bm.view()[i]),
+    // TODO: add requires and ensures
     {
         let n: usize = self.bits.len();
         let mut i: usize = 0;
         let mut res_bits: Vec<u64> = Vec::new();
         let mut result = BitMap { bits: res_bits };
         while i < n
-        invariant
-            i <= n,
-            n == self.bits.len(),
-            n == bm.bits.len(),
-            result.bits.len() == i,
-            forall|j: int| 0 <= j < i as int ==> result.bits@[j] == (self.bits@[j] | bm.bits@[j]),
-            forall|j: int, b: int| 0 <= j < i as int && 0 <= b < 64 ==>
-                #[trigger] Self::bit_at_u64(result.bits@[j], b) ==
-                    (Self::bit_at_u64(self.bits@[j], b) || Self::bit_at_u64(bm.bits@[j], b)),
+        // TODO: add loop invariant
         {
             res_bits = result.bits;
             let u1: u64 = self.bits[i];
             let u2: u64 = bm.bits[i];
             let or_int: u64 = u1 | u2;
-            proof {
-                assert forall|b: int| 0 <= b < 64 implies
-                    #[trigger] Self::bit_at_u64(or_int, b) == (Self::bit_at_u64(u1, b) || Self::bit_at_u64(u2, b))
-                by {
-                    let bu = b as u64;
-                    assert((((u1 | u2) >> bu) & 1u64 == 1u64) == (((u1 >> bu) & 1u64 == 1u64) || ((u2 >> bu) & 1u64 == 1u64))) by(bit_vector)
-                        requires 0u64 <= bu < 64u64;
-                }
-            }
+            // TODO: add proof
             res_bits.push(or_int);
             result = BitMap { bits: res_bits };
             i = i + 1;
@@ -261,199 +211,6 @@ requires
     let bm3_x2 = bm3.get_bit(x2);
     let bm3_x3 = bm3.get_bit(x3);
     assert(bm3_x1 && bm3_x2 && bm3_x3);
-}
-
-fn test_bitmap1(x1: u32, x2: u32, x3: u32)
-requires
-    0 < x1 < 128,
-    0 < x2 < 128,
-    0 < x3 < 128,
-{
-    let mut bm1 = BitMap::from(vec![0u64, 0u64]);
-    let mut bm2 = BitMap::from(vec![0u64, 0u64]);
-
-    bm1.set_bit(x1, true);
-    bm1.set_bit(x2, true);
-    bm2.set_bit(x2, true);
-    bm2.set_bit(x3, true);
-    let bm1_x1 = bm1.get_bit(x1);
-    let bm1_x2 = bm1.get_bit(x2);
-    // assert(bm1_x1 && bm1_x2);
-    let bm2_x2 = bm2.get_bit(x2);
-    let bm2_x3 = bm2.get_bit(x3);
-    // assert(bm2_x2 && bm2_x3);
-
-    let bm3 = bm1.or(&bm2);
-    let bm3_x1 = bm3.get_bit(x1);
-    let bm3_x2 = bm3.get_bit(x2);
-    let bm3_x3 = bm3.get_bit(x3);
-    // assert(bm3_x1 && bm3_x2 && bm3_x3);
-}
-
-fn test_bitmap2(x1: u32, x2: u32, x3: u32)
-requires
-    0 < x1 < 128,
-    0 < x2 < 128,
-    0 < x3 < 128,
-{
-    let mut bm1 = BitMap::from(vec![0u64, 0u64]);
-    let mut bm2 = BitMap::from(vec![0u64, 0u64]);
-
-    bm1.set_bit(x1, true);
-    bm1.set_bit(x2, true);
-    bm2.set_bit(x2, true);
-    bm2.set_bit(x3, true);
-    let bm1_x1 = bm1.get_bit(x1);
-    let bm1_x2 = bm1.get_bit(x2);
-    assert(bm1_x1 && bm1_x2);
-    let bm2_x2 = bm2.get_bit(x2);
-    let bm2_x3 = bm2.get_bit(x3);
-    // assert(bm2_x2 && bm2_x3);
-
-    let bm3 = bm1.or(&bm2);
-    let bm3_x1 = bm3.get_bit(x1);
-    let bm3_x2 = bm3.get_bit(x2);
-    let bm3_x3 = bm3.get_bit(x3);
-    // assert(bm3_x1 && bm3_x2 && bm3_x3);
-}
-
-fn test_bitmap3(x1: u32, x2: u32, x3: u32)
-requires
-    0 < x1 < 128,
-    0 < x2 < 128,
-    0 < x3 < 128,
-{
-    let mut bm1 = BitMap::from(vec![0u64, 0u64]);
-    let mut bm2 = BitMap::from(vec![0u64, 0u64]);
-
-    bm1.set_bit(x1, true);
-    bm1.set_bit(x2, true);
-    bm2.set_bit(x2, true);
-    bm2.set_bit(x3, true);
-    let bm1_x1 = bm1.get_bit(x1);
-    let bm1_x2 = bm1.get_bit(x2);
-    assert(bm1_x1 && bm1_x2);
-    let bm2_x2 = bm2.get_bit(x2);
-    let bm2_x3 = bm2.get_bit(x3);
-    assert(bm2_x2 && bm2_x3);
-
-    let bm3 = bm1.or(&bm2);
-    let bm3_x1 = bm3.get_bit(x1);
-    let bm3_x2 = bm3.get_bit(x2);
-    let bm3_x3 = bm3.get_bit(x3);
-    // assert(bm3_x1 && bm3_x2 && bm3_x3);
-}
-
-fn test_bitmap4(x1: u32, x2: u32, x3: u32)
-requires
-    0 < x1 < 128,
-    0 < x2 < 128,
-    0 < x3 < 128,
-{
-    let mut bm1 = BitMap::from(vec![0u64, 0u64]);
-    let mut bm2 = BitMap::from(vec![0u64, 0u64]);
-
-    bm1.set_bit(x1, true);
-    bm1.set_bit(x2, true);
-    bm2.set_bit(x2, true);
-    bm2.set_bit(x3, true);
-    let bm1_x1 = bm1.get_bit(x1);
-    let bm1_x2 = bm1.get_bit(x2);
-    assert(bm1_x1 && bm1_x2);
-    let bm2_x2 = bm2.get_bit(x2);
-    let bm2_x3 = bm2.get_bit(x3);
-    assert(bm2_x2 && bm2_x3);
-
-    let bm3 = bm1.or(&bm2);
-    let bm3_x1 = bm3.get_bit(x1);
-    let bm3_x2 = bm3.get_bit(x2);
-    let bm3_x3 = bm3.get_bit(x3);
-    assert(bm3_x1 && bm3_x2 && bm3_x3);
-}
-
-fn test_bitmap5(x1: u32, x2: u32, x3: u32)
-requires
-    0 < x1 < 128,
-    0 < x2 < 128,
-    0 < x3 < 128,
-{
-    let mut bm1 = BitMap::from(vec![0u64, 0u64]);
-    let mut bm2 = BitMap::from(vec![0u64, 0u64]);
-
-    bm1.set_bit(x1, true);
-    bm1.set_bit(x2, true);
-    bm2.set_bit(x2, true);
-    bm2.set_bit(x3, true);
-    let bm1_x1 = bm1.get_bit(x1);
-    let bm1_x2 = bm1.get_bit(x2);
-    assert(bm1_x1);
-    assert(bm1_x2);
-    let bm2_x2 = bm2.get_bit(x2);
-    let bm2_x3 = bm2.get_bit(x3);
-    assert(bm2_x2 && bm2_x3);
-
-    let bm3 = bm1.or(&bm2);
-    let bm3_x1 = bm3.get_bit(x1);
-    let bm3_x2 = bm3.get_bit(x2);
-    let bm3_x3 = bm3.get_bit(x3);
-    assert(bm3_x1 && bm3_x2 && bm3_x3);
-}
-
-fn test_bitmap6(x1: u32, x2: u32, x3: u32)
-requires
-    0 < x1 < 128,
-    0 < x2 < 128,
-    0 < x3 < 128,
-{
-    let mut bm1 = BitMap::from(vec![0u64, 0u64]);
-    let mut bm2 = BitMap::from(vec![0u64, 0u64]);
-
-    bm1.set_bit(x1, true);
-    bm1.set_bit(x2, true);
-    bm2.set_bit(x2, true);
-    bm2.set_bit(x3, true);
-    let bm1_x1 = bm1.get_bit(x1);
-    let bm1_x2 = bm1.get_bit(x2);
-    assert(bm1_x1 && bm1_x2);
-    let bm2_x2 = bm2.get_bit(x2);
-    let bm2_x3 = bm2.get_bit(x3);
-    assert(bm2_x2);
-    assert(bm2_x3);
-
-    let bm3 = bm1.or(&bm2);
-    let bm3_x1 = bm3.get_bit(x1);
-    let bm3_x2 = bm3.get_bit(x2);
-    let bm3_x3 = bm3.get_bit(x3);
-    assert(bm3_x1 && bm3_x2 && bm3_x3);
-}
-
-fn test_bitmap7(x1: u32, x2: u32, x3: u32)
-requires
-    0 < x1 < 128,
-    0 < x2 < 128,
-    0 < x3 < 128,
-{
-    let mut bm1 = BitMap::from(vec![0u64, 0u64]);
-    let mut bm2 = BitMap::from(vec![0u64, 0u64]);
-
-    bm1.set_bit(x1, true);
-    bm1.set_bit(x2, true);
-    bm2.set_bit(x2, true);
-    bm2.set_bit(x3, true);
-    let bm1_x1 = bm1.get_bit(x1);
-    let bm1_x2 = bm1.get_bit(x2);
-    assert(bm1_x1 && bm1_x2);
-    let bm2_x2 = bm2.get_bit(x2);
-    let bm2_x3 = bm2.get_bit(x3);
-    assert(bm2_x2 && bm2_x3);
-
-    let bm3 = bm1.or(&bm2);
-    let bm3_x1 = bm3.get_bit(x1);
-    let bm3_x2 = bm3.get_bit(x2);
-    let bm3_x3 = bm3.get_bit(x3);
-    assert(bm3_x1);
-    assert(bm3_x2);
-    assert(bm3_x3);
 }
 } // verus!
 fn main() {}

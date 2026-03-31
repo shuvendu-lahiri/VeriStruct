@@ -1,6 +1,9 @@
 #![allow(unused_imports)]
+use builtin::*;
+use builtin_macros::*;
 use vstd::atomic_ghost::*;
 use vstd::prelude::*;
+use vstd::{pervasive::*, *};
 
 verus! {
 
@@ -19,7 +22,7 @@ struct_with_invariants!{
 
     spec fn well_formed(&self) -> bool {
         invariant on field with () is (b: bool, t: Option<T>) {
-            b == t.is_some()
+            // TODO: add specification
         }
     }
 }
@@ -37,12 +40,10 @@ struct_with_invariants!{
 /// # Returns
 /// * A tracked value of type T that was contained in the lock
 fn take<T>(lock: &Lock<T>) -> (t: Tracked<T>)
-requires
-    lock.well_formed(),
+    // TODO: add requires and ensures
 {
     loop
-    invariant
-        lock.well_formed(),
+        // TODO: add invariants
     {
         let tracked ghost_value: Option<T>;
         let result =
@@ -77,7 +78,7 @@ struct VEqualG {}
 
 impl AtomicInvariantPredicate<(), u64, u64> for VEqualG {
     closed spec fn atomic_inv(k: (), v: u64, g: u64) -> bool {
-        v == g
+        // TODO: add specification
     }
 }
 
@@ -93,251 +94,6 @@ proof fn proof_int(x: u64) -> (tracked y: u64)
 /* TEST CODE BELOW */
 
 pub fn test() {
-
-    let ato = AtomicU64::<(), u64, VEqualG>::new(Ghost(()), 10u64, Tracked(10u64));
-
-    atomic_with_ghost!(ato => fetch_or(19u64);  ghost g => { g = proof_int(g | 19u64); });
-    atomic_with_ghost!(ato => fetch_or(23u64);  update old_val -> new_val; ghost g => {
-        assert(new_val == old_val | 23u64);
-        assert(g == old_val);
-        g = proof_int(g | 23u64);
-        assert(g == new_val);
-    });
-
-    let res = atomic_with_ghost!(ato => compare_exchange(20u64, 25u64);
-        update old_val -> new_val;
-        returning ret;
-        ghost g => {
-            assert(imply(matches!(ret, Ok(_)), old_val == 20u64 && new_val == 25u64));
-            assert(imply(matches!(ret, Err(_)), old_val != 20u64 && new_val == old_val
-                         && ret->Err_0 == old_val));
-            g = if g == 20u64 { proof_int(25u64) } else { g };
-    });
-
-    let res = atomic_with_ghost!(ato => load();
-        returning ret;
-        ghost g => { assert(ret == g); });
-
-    atomic_with_ghost!(ato => store(36u64);
-        update old_val -> new_val;
-        ghost g => {
-            assert(old_val == g);
-            assert(new_val == 36u64);
-            g = proof_int(36u64);
-    });
-}
-
-pub fn test1() {
-
-    let ato = AtomicU64::<(), u64, VEqualG>::new(Ghost(()), 10u64, Tracked(10u64));
-
-    atomic_with_ghost!(ato => fetch_or(19u64);  ghost g => { g = proof_int(g | 19u64); });
-    atomic_with_ghost!(ato => fetch_or(23u64);  update old_val -> new_val; ghost g => {
-        assert(new_val == old_val | 23u64);
-        // assert(g == old_val);
-        g = proof_int(g | 23u64);
-        // assert(g == new_val);
-    });
-
-    let res = atomic_with_ghost!(ato => compare_exchange(20u64, 25u64);
-        update old_val -> new_val;
-        returning ret;
-        ghost g => {
-            // assert(imply(matches!(ret, Ok(_)), old_val == 20u64 && new_val == 25u64));
-            // assert(imply(matches!(ret, Err(_)), old_val != 20u64 && new_val == old_val
-            //              && ret->Err_0 == old_val));
-            g = if g == 20u64 { proof_int(25u64) } else { g };
-    });
-
-    let res = atomic_with_ghost!(ato => load();
-        returning ret;
-        ghost g => { assert(ret == g); });
-
-    atomic_with_ghost!(ato => store(36u64);
-        update old_val -> new_val;
-        ghost g => {
-            // assert(old_val == g);
-            // assert(new_val == 36u64);
-            g = proof_int(36u64);
-    });
-}
-
-pub fn test2() {
-
-    let ato = AtomicU64::<(), u64, VEqualG>::new(Ghost(()), 10u64, Tracked(10u64));
-
-    atomic_with_ghost!(ato => fetch_or(19u64);  ghost g => { g = proof_int(g | 19u64); });
-    atomic_with_ghost!(ato => fetch_or(23u64);  update old_val -> new_val; ghost g => {
-        assert(new_val == old_val | 23u64);
-        assert(g == old_val);
-        g = proof_int(g | 23u64);
-        // assert(g == new_val);
-    });
-
-    let res = atomic_with_ghost!(ato => compare_exchange(20u64, 25u64);
-        update old_val -> new_val;
-        returning ret;
-        ghost g => {
-            // assert(imply(matches!(ret, Ok(_)), old_val == 20u64 && new_val == 25u64));
-            // assert(imply(matches!(ret, Err(_)), old_val != 20u64 && new_val == old_val
-            //              && ret->Err_0 == old_val));
-            g = if g == 20u64 { proof_int(25u64) } else { g };
-    });
-
-    let res = atomic_with_ghost!(ato => load();
-        returning ret;
-        ghost g => { assert(ret == g); });
-
-    atomic_with_ghost!(ato => store(36u64);
-        update old_val -> new_val;
-        ghost g => {
-            // assert(old_val == g);
-            // assert(new_val == 36u64);
-            g = proof_int(36u64);
-    });
-}
-
-pub fn test3() {
-
-    let ato = AtomicU64::<(), u64, VEqualG>::new(Ghost(()), 10u64, Tracked(10u64));
-
-    atomic_with_ghost!(ato => fetch_or(19u64);  ghost g => { g = proof_int(g | 19u64); });
-    atomic_with_ghost!(ato => fetch_or(23u64);  update old_val -> new_val; ghost g => {
-        assert(new_val == old_val | 23u64);
-        assert(g == old_val);
-        g = proof_int(g | 23u64);
-        assert(g == new_val);
-    });
-
-    let res = atomic_with_ghost!(ato => compare_exchange(20u64, 25u64);
-        update old_val -> new_val;
-        returning ret;
-        ghost g => {
-            // assert(imply(matches!(ret, Ok(_)), old_val == 20u64 && new_val == 25u64));
-            // assert(imply(matches!(ret, Err(_)), old_val != 20u64 && new_val == old_val
-            //              && ret->Err_0 == old_val));
-            g = if g == 20u64 { proof_int(25u64) } else { g };
-    });
-
-    let res = atomic_with_ghost!(ato => load();
-        returning ret;
-        ghost g => { assert(ret == g); });
-
-    atomic_with_ghost!(ato => store(36u64);
-        update old_val -> new_val;
-        ghost g => {
-            // assert(old_val == g);
-            // assert(new_val == 36u64);
-            g = proof_int(36u64);
-    });
-}
-
-pub fn test4() {
-
-    let ato = AtomicU64::<(), u64, VEqualG>::new(Ghost(()), 10u64, Tracked(10u64));
-
-    atomic_with_ghost!(ato => fetch_or(19u64);  ghost g => { g = proof_int(g | 19u64); });
-    atomic_with_ghost!(ato => fetch_or(23u64);  update old_val -> new_val; ghost g => {
-        assert(new_val == old_val | 23u64);
-        assert(g == old_val);
-        g = proof_int(g | 23u64);
-        assert(g == new_val);
-    });
-
-    let res = atomic_with_ghost!(ato => compare_exchange(20u64, 25u64);
-        update old_val -> new_val;
-        returning ret;
-        ghost g => {
-            assert(imply(matches!(ret, Ok(_)), old_val == 20u64 && new_val == 25u64));
-            // assert(imply(matches!(ret, Err(_)), old_val != 20u64 && new_val == old_val
-            //              && ret->Err_0 == old_val));
-            g = if g == 20u64 { proof_int(25u64) } else { g };
-    });
-
-    let res = atomic_with_ghost!(ato => load();
-        returning ret;
-        ghost g => { assert(ret == g); });
-
-    atomic_with_ghost!(ato => store(36u64);
-        update old_val -> new_val;
-        ghost g => {
-            // assert(old_val == g);
-            // assert(new_val == 36u64);
-            g = proof_int(36u64);
-    });
-}
-
-pub fn test5() {
-
-    let ato = AtomicU64::<(), u64, VEqualG>::new(Ghost(()), 10u64, Tracked(10u64));
-
-    atomic_with_ghost!(ato => fetch_or(19u64);  ghost g => { g = proof_int(g | 19u64); });
-    atomic_with_ghost!(ato => fetch_or(23u64);  update old_val -> new_val; ghost g => {
-        assert(new_val == old_val | 23u64);
-        assert(g == old_val);
-        g = proof_int(g | 23u64);
-        assert(g == new_val);
-    });
-
-    let res = atomic_with_ghost!(ato => compare_exchange(20u64, 25u64);
-        update old_val -> new_val;
-        returning ret;
-        ghost g => {
-            assert(imply(matches!(ret, Ok(_)), old_val == 20u64 && new_val == 25u64));
-            assert(imply(matches!(ret, Err(_)), old_val != 20u64 && new_val == old_val
-                         && ret->Err_0 == old_val));
-            g = if g == 20u64 { proof_int(25u64) } else { g };
-    });
-
-    let res = atomic_with_ghost!(ato => load();
-        returning ret;
-        ghost g => { assert(ret == g); });
-
-    atomic_with_ghost!(ato => store(36u64);
-        update old_val -> new_val;
-        ghost g => {
-            // assert(old_val == g);
-            // assert(new_val == 36u64);
-            g = proof_int(36u64);
-    });
-}
-
-pub fn test6() {
-
-    let ato = AtomicU64::<(), u64, VEqualG>::new(Ghost(()), 10u64, Tracked(10u64));
-
-    atomic_with_ghost!(ato => fetch_or(19u64);  ghost g => { g = proof_int(g | 19u64); });
-    atomic_with_ghost!(ato => fetch_or(23u64);  update old_val -> new_val; ghost g => {
-        assert(new_val == old_val | 23u64);
-        assert(g == old_val);
-        g = proof_int(g | 23u64);
-        assert(g == new_val);
-    });
-
-    let res = atomic_with_ghost!(ato => compare_exchange(20u64, 25u64);
-        update old_val -> new_val;
-        returning ret;
-        ghost g => {
-            assert(imply(matches!(ret, Ok(_)), old_val == 20u64 && new_val == 25u64));
-            assert(imply(matches!(ret, Err(_)), old_val != 20u64 && new_val == old_val
-                         && ret->Err_0 == old_val));
-            g = if g == 20u64 { proof_int(25u64) } else { g };
-    });
-
-    let res = atomic_with_ghost!(ato => load();
-        returning ret;
-        ghost g => { assert(ret == g); });
-
-    atomic_with_ghost!(ato => store(36u64);
-        update old_val -> new_val;
-        ghost g => {
-            assert(old_val == g);
-            // assert(new_val == 36u64);
-            g = proof_int(36u64);
-    });
-}
-
-pub fn test7() {
 
     let ato = AtomicU64::<(), u64, VEqualG>::new(Ghost(()), 10u64, Tracked(10u64));
 
