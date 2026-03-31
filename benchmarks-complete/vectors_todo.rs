@@ -17,12 +17,22 @@ verus! {
 /// # Returns
 /// * The index where the key was found in the vector
 fn binary_search(v: &Vec<u64>, k: u64) -> (r: usize)
-// TODO: add specification
+requires
+    v.len() > 0,
+    exists|i: int| 0 <= i < v.len() && k == v[i],
+    forall|i: int, j: int| 0 <= i <= j < v.len() ==> v[i] <= v[j],
+ensures
+    r < v.len(),
+    v[r as int] == k,
 {
     let mut i1: usize = 0;
     let mut i2: usize = v.len() - 1;
     while i1 != i2
-    // TODO: add invariants
+    invariant
+        i2 < v.len(),
+        exists|i: int| i1 <= i <= i2 && k == v[i],
+        forall|i: int, j: int| 0 <= i <= j < v.len() ==> v[i] <= v[j],
+    decreases i2 - i1,
     {
         let ix = i1 + (i2 - i1) / 2;
         if v[ix] < k {
@@ -39,12 +49,18 @@ fn binary_search(v: &Vec<u64>, k: u64) -> (r: usize)
 /// # Arguments
 /// * `v` - A mutable reference to a vector of u64 integers to be reversed
 fn reverse(v: &mut Vec<u64>)
-// TODO: add specification
+ensures
+    v.len() == old(v).len(),
+    forall|i: int| 0 <= i < v.len() ==> v[i] == old(v)[v.len() - i - 1],
 {
     let length = v.len();
     let ghost v1 = v@;
     for n in 0..(length / 2)
-    // TODO: add invariants
+    invariant
+        length == v.len(),
+        forall|i: int| 0 <= i < n ==> v[i] == v1[length - i - 1],
+        forall|i: int| 0 <= i < n ==> v1[i] == v[length - i - 1],
+        forall|i: int| n <= i && i + n < length ==> #[trigger] v[i] == v1[i],
     {
         let x = v[n];
         let y = v[length - 1 - n];
@@ -55,12 +71,22 @@ fn reverse(v: &mut Vec<u64>)
 
 #[verifier::loop_isolation(false)]
 fn binary_search_no_spinoff(v: &Vec<u64>, k: u64) -> (r: usize)
-// TODO: add specification
+requires
+    v.len() > 0,
+    exists|i: int| 0 <= i < v.len() && k == v[i],
+    forall|i: int, j: int| 0 <= i <= j < v.len() ==> v[i] <= v[j],
+ensures
+    r < v.len(),
+    v[r as int] == k,
 {
     let mut i1: usize = 0;
     let mut i2: usize = v.len() - 1;
     while i1 != i2
-    // TODO: add invariants
+    invariant
+        i2 < v.len(),
+        exists|i: int| i1 <= i <= i2 && k == v[i],
+        forall|i: int, j: int| 0 <= i <= j < v.len() ==> v[i] <= v[j],
+    decreases i2 - i1,
     {
         let ghost d = i2 - i1;
         let ix = i1 + (i2 - i1) / 2;

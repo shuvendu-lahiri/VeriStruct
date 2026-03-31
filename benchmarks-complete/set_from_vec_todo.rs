@@ -9,27 +9,34 @@ struct VecSet {
 
 impl VecSet {
     pub closed spec fn view(&self) -> Set<u64> {
-        // TODO: add requires and ensures
+        self.vt@.to_set()
     }
 
     pub fn new() -> (s: Self)
-        // TODO: add requires and ensures
+    ensures
+        s@ =~= Set::<u64>::empty(),
     {
         VecSet { vt: Vec::new() }
     }
 
     pub fn insert(&mut self, v: u64)
-        // TODO: add requires and ensures
+    ensures
+        self@ =~= old(self)@.insert(v),
     {
         // TODO: add proof
         self.vt.push(v);
+        proof {
+            broadcast use vstd::seq_lib::group_seq_properties;
+        }
     }
 
     pub fn contains(&self, v: u64) -> (contained: bool)
-        // TODO: add requires and ensures
+    ensures
+        contained == self@.contains(v),
     {
         for i in iter: 0..self.vt.len()
-        // TODO: add invariant
+        invariant
+            forall|j: nat| j < i ==> self.vt[j as int] != v,
         {
             if self.vt[i] == v {
                 return true;

@@ -1,9 +1,6 @@
 #![allow(unused_imports)]
-use builtin::*;
-use builtin_macros::*;
 use vstd::atomic_ghost::*;
 use vstd::prelude::*;
-use vstd::{pervasive::*, *};
 
 verus! {
 
@@ -22,7 +19,7 @@ struct_with_invariants!{
 
     spec fn well_formed(&self) -> bool {
         invariant on field with () is (b: bool, t: Option<T>) {
-            // TODO: add specification
+            b == t.is_some()
         }
     }
 }
@@ -40,10 +37,12 @@ struct_with_invariants!{
 /// # Returns
 /// * A tracked value of type T that was contained in the lock
 fn take<T>(lock: &Lock<T>) -> (t: Tracked<T>)
-    // TODO: add requires and ensures
+requires
+    lock.well_formed(),
 {
     loop
-        // TODO: add invariants
+    invariant
+        lock.well_formed(),
     {
         let tracked ghost_value: Option<T>;
         let result =
@@ -78,7 +77,7 @@ struct VEqualG {}
 
 impl AtomicInvariantPredicate<(), u64, u64> for VEqualG {
     closed spec fn atomic_inv(k: (), v: u64, g: u64) -> bool {
-        // TODO: add specification
+        v == g
     }
 }
 
