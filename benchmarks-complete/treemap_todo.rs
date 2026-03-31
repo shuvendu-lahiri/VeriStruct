@@ -294,7 +294,8 @@ impl<V> TreeMap<V> {
     /// Requires: Nothing (unconditional)
     /// Ensures: The returned TreeMap represents an empty map with no key-value pairs
     pub fn new() -> (s: Self)
-    // TODO: add requires and ensures
+    ensures
+        s@ =~= Map::<u64, V>::empty(),
     {
         TreeMap::<V> { root: None }
     }
@@ -304,11 +305,12 @@ impl<V> TreeMap<V> {
     /// Requires: Nothing (the tree maintains its invariants automatically)
     /// Ensures: The tree's map representation equals the original map with the key-value pair inserted
     pub fn insert(&mut self, key: u64, value: V)
-    // TODO: add requires and ensures
+    ensures
+        self@ =~= old(self)@.insert(key, value),
     {
         // Use the type invariant to establish that the tree is well-formed
         proof {
-            // TODO: add proof
+            use_type_invariant(&*self);
          }
 
         // Extract the root, perform insertion, then restore it
@@ -323,7 +325,8 @@ impl<V> TreeMap<V> {
     /// Requires: Nothing (the tree maintains its invariants automatically)
     /// Ensures: The tree's map representation equals the original map with the key removed
     pub fn delete(&mut self, key: u64)
-    // TODO: add requires and ensures
+    ensures
+        self@ =~= old(self)@.remove(key),
     {
         // Use the type invariant to establish that the tree is well-formed
         proof { use_type_invariant(&*self); }
@@ -340,7 +343,8 @@ impl<V> TreeMap<V> {
     /// Requires: Nothing (the tree maintains its invariants automatically)
     /// Ensures: Returns Some(reference to value) if the key exists in the tree, None otherwise
     pub fn get(&self, key: u64) -> (ret: Option<&V>)
-    // TODO: add requires and ensures
+    ensures
+        ret == (if self@.dom().contains(key) { Some(&self@[key]) } else { None }),
     {
         // Use the type invariant to establish that the tree is well-formed
         proof { use_type_invariant(&*self); }
