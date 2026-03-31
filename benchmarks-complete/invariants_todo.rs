@@ -9,7 +9,7 @@ struct ModPredicate {}
 
 impl InvariantPredicate<int, u32> for ModPredicate {
     closed spec fn inv(k: int, v: u32) -> bool {
-        // TODO: add specification
+        v as int % 2 == k
     }
 }
 

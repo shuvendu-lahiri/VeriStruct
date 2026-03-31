@@ -1,5 +1,4 @@
 use vstd::pervasive::*;
-use builtin_macros::*;
 use vstd::prelude::*;
 
 verus! {
@@ -12,16 +11,25 @@ pub enum MyOption<A> {
 }
 
 pub open spec fn is_Some<A>(opt: MyOption<A>) -> bool {
-    // TODO: add specification
+    match opt {
+        MyOption::Some(_) => true,
+        MyOption::None => false,
+    }
 }
 
 pub open spec fn is_None<A>(opt: MyOption<A>) -> bool {
-    // TODO: add specification
+    match opt {
+        MyOption::None => true,
+        MyOption::Some(_) => false,
+    }
 }
 
 pub open spec fn get_Some_0<A>(opt: MyOption<A>) -> A
 {
-    // TODO: add specification
+    match opt {
+        MyOption::Some(a) => a,
+        MyOption::None => arbitrary(),
+    }
 }
 
 
@@ -40,11 +48,15 @@ impl<A: Copy> Copy for MyOption<A> {
 
 impl<A> MyOption<A> {
     pub open spec fn Or(self, optb: MyOption<A>) -> MyOption<A> {
-        // TODO: add specification
+        match self {
+            MyOption::None => optb,
+            MyOption::Some(_) => self,
+        }
     }
 
     pub fn or(self, optb: MyOption<A>) -> (res: MyOption<A>)
-    // TODO: add requires and ensures
+    ensures
+        res == self.Or(optb),
     {
         match self {
             MyOption::None => optb,
@@ -54,7 +66,8 @@ impl<A> MyOption<A> {
 
     #[inline(always)]
     pub const fn is_some(&self) -> (res: bool)
-    // TODO: add requires and ensures
+    ensures
+        res == is_Some(*self),
     {
         match self {
             MyOption::Some(_) => true,
@@ -64,7 +77,8 @@ impl<A> MyOption<A> {
 
     #[inline(always)]
     pub const fn is_none(&self) -> (res: bool)
-    // TODO: add requires and ensures
+    ensures
+        res == is_None(*self),
     {
         match self {
             MyOption::Some(_) => false,
@@ -73,7 +87,10 @@ impl<A> MyOption<A> {
     }
 
     pub fn as_ref(&self) -> (a: MyOption<&A>)
-    // TODO: add requires and ensures
+    ensures
+        is_Some(*self) <==> is_Some(a),
+        is_None(*self) <==> is_None(a),
+        is_Some(*self) ==> *get_Some_0(a) == get_Some_0(*self),
     {
         match self {
             MyOption::Some(x) => MyOption::Some(x),
@@ -82,7 +99,10 @@ impl<A> MyOption<A> {
     }
 
     pub fn unwrap(self) -> (a: A)
-    // TODO: add requires and ensures
+    requires
+        is_Some(self),
+    ensures
+        a == get_Some_0(self),
     {
         match self {
             MyOption::Some(a) => a,

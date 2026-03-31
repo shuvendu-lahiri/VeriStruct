@@ -13,7 +13,7 @@ struct FixedParity {
 
 impl RwLockPredicate<u64> for FixedParity {
     closed spec fn inv(self, v: u64) -> bool {
-        // TODO: add specification
+        v as int % 2 == self.parity
     }
 }
 
