@@ -9,7 +9,18 @@ verus! {
     }
 
     impl<T: Copy> View for RingBuffer<T> {
-        // TODO: add specification
+        type V = (Seq<T>, usize);
+        closed spec fn view(&self) -> Self::V {
+            let cap = self.ring.len();
+            let content =
+                if self.tail >= self.head {
+                    self.ring@.subrange(self.head as int, self.tail as int)
+                } else {
+                    self.ring@.subrange(self.head as int, cap as int)
+                        .add(self.ring@.subrange(0, self.tail as int))
+                };
+            (content, cap)
+        }
     }
 
 
@@ -30,16 +41,19 @@ impl<T: Copy> RingBuffer<T> {
     /// Invariant for the ring buffer.
     #[verifier::type_invariant]
     closed spec fn inv(&self) -> bool {
-        // TODO: add specification
+        &&& self.head < self.ring.len()
+        &&& self.tail < self.ring.len()
+        &&& self.ring.len() > 0
     }
 
 
     /// Returns how many elements are in the buffer.
     pub fn len(&self) -> (ret: usize)
-        // TODO: add requires and ensures
+    ensures
+        ret as int == self@.0.len(),
     {
         proof {
-            // TODO: add proof
+            use_type_invariant(self);
         }
         if self.tail > self.head {
             self.tail - self.head
@@ -52,27 +66,45 @@ impl<T: Copy> RingBuffer<T> {
 
     /// Returns true if there are any items in the buffer, false otherwise.
     pub fn has_elements(&self) -> (ret: bool)
-        // TODO: add requires and ensures
+    ensures
+        ret == (self@.0.len() > 0),
     {
         proof {
-            // TODO: add proof
+            use_type_invariant(self);
         }
         self.head != self.tail
     }
 
     /// Returns true if the buffer is full, false otherwise.
     pub fn is_full(&self) -> (ret: bool)
-        // TODO: add requires and ensures
+    ensures
+        ret == (self@.0.len() == self@.1 - 1),
     {
         proof {
-            // TODO: add proof
+            use_type_invariant(self);
+            let cap = self.ring.len() as int;
+            let head = self.head as int;
+            let tail = self.tail as int;
+            if tail >= head {
+                assert(self@.0.len() == tail - head);
+            } else {
+                assert(self@.0.len() == cap - head + tail);
+            }
+            assert(tail + 1 < cap ==> (tail + 1) % cap == tail + 1) by (nonlinear_arith)
+                requires cap > 0, 0 <= tail, tail < cap;
+            assert(tail + 1 == cap ==> (tail + 1) % cap == 0) by (nonlinear_arith)
+                requires cap > 0, 0 <= tail, tail < cap;
         }
         self.head == ((self.tail + 1) % self.ring.len())
     }
 
     /// Creates a new RingBuffer with the given backing `ring` storage.
     pub fn new(ring: Vec<T>) -> (ret: RingBuffer<T>)
-        // TODO: add requires and ensures
+    requires
+        ring.len() >= 1,
+    ensures
+        ret@.0.len() == 0,
+        ret@.1 == ring.len(),
     {
         RingBuffer {
             head: 0,
@@ -95,16 +127,45 @@ impl<T: Copy> RingBuffer<T> {
     /// * `true` - The element was successfully added (buffer was not full)
     /// * `false` - The element could not be added (buffer was full)
     pub fn enqueue(&mut self, val: T) -> (succ: bool)
-        // TODO: add requires and ensures
+    ensures
+        succ <==> old(self)@.0.len() < old(self)@.1 - 1,
+        succ ==> self@.0.len() == old(self)@.0.len() + 1,
+        succ ==> self@.1 == old(self)@.1,
+        !succ ==> self@ == old(self)@,
     {
         if self.is_full() {
             false
         } else {
             proof {
-                // TODO: add proof
+                use_type_invariant(&*self);
+            }
+            let ghost old_tail = self.tail as int;
+            let ghost old_head = self.head as int;
+            let ghost cap = self.ring.len() as int;
+            let ghost old_len = self@.0.len();
+            proof {
+                if old_tail >= old_head {
+                    assert(old_len == old_tail - old_head);
+                } else {
+                    assert(old_len == cap - old_head + old_tail);
+                }
+                assert(old_tail + 1 < cap ==> (old_tail + 1) % cap == old_tail + 1) by (nonlinear_arith)
+                    requires cap > 0, 0 <= old_tail, old_tail < cap;
+                assert(old_tail + 1 == cap ==> (old_tail + 1) % cap == 0) by (nonlinear_arith)
+                    requires cap > 0, 0 <= old_tail, old_tail < cap;
             }
             my_set(&mut self.ring, self.tail, val);
             self.tail = (self.tail + 1) % self.ring.len();
+            proof {
+                use_type_invariant(&*self);
+                let new_tail = self.tail as int;
+                let head = self.head as int;
+                if new_tail >= head {
+                    assert(self@.0.len() == new_tail - head);
+                } else {
+                    assert(self@.0.len() == cap - head + new_tail);
+                }
+            }
             true
         }
     }
@@ -119,14 +180,44 @@ impl<T: Copy> RingBuffer<T> {
     /// * `Some(T)` - The front element if the buffer was not empty
     /// * `None` - If the buffer was empty
     pub fn dequeue(&mut self) -> (ret: Option<T>)
-        // TODO: add requires and ensures
+    ensures
+        old(self)@.0.len() > 0 ==> ret.is_some(),
+        old(self)@.0.len() > 0 ==> self@.0.len() == old(self)@.0.len() - 1,
+        old(self)@.0.len() > 0 ==> self@.1 == old(self)@.1,
+        old(self)@.0.len() == 0 ==> ret.is_none(),
+        old(self)@.0.len() == 0 ==> self@ == old(self)@,
     {
         proof {
-            // TODO: add proof
+            use_type_invariant(&*self);
+        }
+        let ghost old_head = self.head as int;
+        let ghost old_tail = self.tail as int;
+        let ghost cap = self.ring.len() as int;
+        let ghost old_len = self@.0.len();
+        proof {
+            if old_tail >= old_head {
+                assert(old_len == old_tail - old_head);
+            } else {
+                assert(old_len == cap - old_head + old_tail);
+            }
+            assert(old_head + 1 < cap ==> (old_head + 1) % cap == old_head + 1) by (nonlinear_arith)
+                requires cap > 0, 0 <= old_head, old_head < cap;
+            assert(old_head + 1 == cap ==> (old_head + 1) % cap == 0) by (nonlinear_arith)
+                requires cap > 0, 0 <= old_head, old_head < cap;
         }
         if self.has_elements() {
             let val = self.ring[self.head];
             self.head = (self.head + 1) % self.ring.len();
+            proof {
+                use_type_invariant(&*self);
+                let new_head = self.head as int;
+                let tail = self.tail as int;
+                if tail >= new_head {
+                    assert(self@.0.len() == tail - new_head);
+                } else {
+                    assert(self@.0.len() == cap - new_head + tail);
+                }
+            }
             Some(val)
         } else {
             None
@@ -137,10 +228,11 @@ impl<T: Copy> RingBuffer<T> {
 
     /// Returns the number of elements that can still be enqueued until it is full.
     pub fn available_len(&self) -> (ret: usize)
-        // TODO: add requires and ensures
+    ensures
+        ret as int == (self@.1 - 1) as int - self@.0.len(),
     {
         proof {
-            // TODO: add proof
+            use_type_invariant(self);
         }
         self.ring.len().saturating_sub(1 + self.len())
     }
